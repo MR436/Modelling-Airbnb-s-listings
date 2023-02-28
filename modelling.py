@@ -105,7 +105,7 @@ def tune_regression_model_hyperparameters():
     print(f'Gridsearch best score {grid_search.best_score_}')
 
 def save_model(folder):
-    print('hi')
+    #print('hi')
     file = pathlib.Path(f'{folder}/model.joblib')
     print(file)
     joblib.dump(sgdR_model, file )
