@@ -32,9 +32,9 @@ The follow steps were taken for data preparation:
   -The Description column had numerous blank spaces, quotes and string lists that needed to be combined into a single string to provide a comprehensive explanation of    the listing. For this purpose, nested for loops were utilized
  - Created new function called load_airbnb which returns the features and labels of  data in a tuple like (features, labels). The features inlude only numerical data as we going to create Regressor model in next task. 
  
- Features : beds  bathrooms  Cleanliness_rating, Accuracy_rating,  Communication_rating, Location_rating, Check-in_rating,  Value_rating  amenities_count 
+ Features : beds, bathrooms  Cleanliness_rating, Accuracy_rating,  Communication_rating, Location_rating, Check-in_rating,  Value_rating  amenities_count 
  Label/ Target : Price Night
 
-
+# Milestone 2: Create a Regression model
 
 
