@@ -50,6 +50,7 @@ def load_airbnb(label : str):
     target = cleaned_data[label]
     features = cleaned_data.drop(columns = label)
     features_num = features.select_dtypes(include = [int, float])
+    #print(features_num.columns)
 
     return (features_num, target)
      

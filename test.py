@@ -1,2 +1,3 @@
-my_dict = {'A': 'apple', 'b':'banana', 'c': 'cat'}
-print(my_dict.values()) 
+team1 =['Janet', 'Maria', 'Randy']
+team2 = ['Jeny', 'Jo', 'Mandy']
+new_list = [()]
