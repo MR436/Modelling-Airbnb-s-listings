@@ -194,7 +194,7 @@ def find_best_model():
         # print the best model and its mean RMSE 
         # print("Best model:", models[best_model_index])
         # print("Mean RMSE:", mean_rmse_scores[best_model_index])
-        save_model('./models/regression/linear_regression')
+        # save_model('./models/regression/linear_regression')
 
 
 if __name__== "__main__":

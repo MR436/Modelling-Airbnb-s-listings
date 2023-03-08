@@ -1,10 +1,13 @@
 from tabular_data import load_airbnb
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import GridSearchCV
-from sklearn.tree import DecisionTreeClassifier
+
 from modelling import save_model
 import numpy as np
 
@@ -47,7 +50,7 @@ def tune_classification_model(model, hyperparams, X, y, cv=5):
     print(f'Best estimator{grid_search.best_estimator_}, Best Score {grid_search.best_score_}')
     return (grid_search.best_estimator_ , grid_search.best_score_)
 
-# save_model('models/classification')
+save_model('./models/classification')
 
 def evaluate_all_models():    
     dt_class_params = {'max_depth': [2, 4, 6, 8, 10],
@@ -70,11 +73,16 @@ def evaluate_all_models():
         'max_features': ['auto', 'sqrt']     
         }      
      
-    dt_class_model = tune_classification_model(DecisionTreeClassifier(), dt_class_params, X, y, cv=5)     
-    print(dt_class_model)     
-    rg_best_param, rg_best_score = tune_classification_model(RandomForestRegressor(), rf_reg_params, X, y, test_size=0.3)     
+    dt_best_param, dt_best_score = tune_classification_model(DecisionTreeClassifier(), dt_class_params, X, y, cv=5)     
+    print(dt_best_param, dt_best_score)     
+    rg_best_param, rg_best_score = tune_classification_model(RandomForestClassifier(), rf_reg_params, X, y, cv=5)     
     print(rg_best_param, rg_best_score)      
-    gb_best_param, gb_best_score = tune_classification_model(GradientBoostingRegressor(), rf_reg_params, X, y, test_size=0.3)     
+    gb_best_param, gb_best_score = tune_classification_model(GradientBoostingClassifier(), gb_reg_params, X, y, cv=5)     
     print(gb_best_param, gb_best_score)   
-#tune_classification_model(log_reg_model, hyper)
-evaluate_all_models()
+
+if __name__== "__main__":
+
+    evaluate_all_models()
+    find_best_model()
+
+
