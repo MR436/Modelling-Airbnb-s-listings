@@ -72,7 +72,8 @@ def evaluate_all_models():
         'min_samples_leaf': [1, 2, 4],     
         'max_features': ['auto', 'sqrt']     
         }      
-     
+
+def find_best_model():
     dt_best_param, dt_best_score = tune_classification_model(DecisionTreeClassifier(), dt_class_params, X, y, cv=5)     
     print(dt_best_param, dt_best_score)     
     rg_best_param, rg_best_score = tune_classification_model(RandomForestClassifier(), rf_reg_params, X, y, cv=5)     
