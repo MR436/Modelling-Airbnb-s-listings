@@ -37,6 +37,7 @@ The follow steps were taken for data preparation:
 
 # Milestone 2: Create a Regression model
 -Developed a basic regression model with the help of the built-in SGDRegressor model from sklearn to estimate the nightly price of each Airbnb listing. To accomplish this, a Python script called "modelling.py" that imports the "load_airbnb" function and designates the "Price Night" variable as the target label for prediction. 
+
 -Evaluate the regression model performance using RMSE and R2 for training set.  
 -Implemented a custom function to perform a grid search over range of hyperparameter values. This function takes in these arguments : model class, training and test sets, dictionary of hyperparamaters. Tuned the range of hyperparameters values of the model using SKLearns gridsearch CV. 
 -Created a function save_model to save the regression model, its hyperparameters and the metrics once trained and tuned. 
