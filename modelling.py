@@ -24,27 +24,27 @@ X['bathrooms'].fillna(1, inplace = True)
 #print(X.bathrooms.unique())
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size = 0.3)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42, test_size = 0.3)
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-#print(X_train)
-#Instantiate & Train the model
-sgdR_model = SGDRegressor()
-sgdR_model.fit(X_train, y_train)
+# scaler = StandardScaler()
+# X_train = scaler.fit_transform(X_train)
+# #print(X_train)
+# #Instantiate & Train the model
+# sgdR_model = SGDRegressor()
+# sgdR_model.fit(X_train, y_train)
 
-y_pred = sgdR_model.predict(X_test)
+# y_pred = sgdR_model.predict(X_test)
 
-#y_pred_test = sgdR_model.predict(X_test)
+# y_pred_test = sgdR_model.predict(X_test)
 
-r2_test= r2_score(y_test, y_pred)
-mse_test = mean_squared_error(y_test, y_pred)
+# r2_test= r2_score(y_test, y_pred)
+# mse_test = mean_squared_error(y_test, y_pred)
 # print(f'This is my r2_score: {r2_test}')
 # print(f'This is my mse_score: {mse_test}')
 
 
 # r2_test = r2_score(y_test, y_pred_test)
-# # mse_test = mean_squared_error(y_test, y_pred_test)       
+# mse_test = mean_squared_error(y_test, y_pred_test)       
 
 
 def custom_tune_regression_model_hyperparameters(model, hyperparams, X, y, test_size =0.3):
@@ -203,10 +203,7 @@ if __name__== "__main__":
     find_best_model()
 
 
-
-
-
-#save_model('models/regression')
+# save_model('models/regression')
 
 
 
