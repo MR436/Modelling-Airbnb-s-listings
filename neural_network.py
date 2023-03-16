@@ -1,3 +1,4 @@
+
 import torch
 #from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -7,14 +8,15 @@ import pandas as pd
 import numpy as np
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-# from tensorflow.keras.callbacks import TensorBoard
+import itertools
 import datetime
+import time
+import errno
+import json
+import os
 import yaml
 import warnings
 warnings.filterwarnings("ignore")
-import time 
-import json
-import os
 
 
 data = pd.read_csv('./clean_tabular_data.csv')
@@ -25,6 +27,8 @@ labels = data['Price_Night'].values
 
 X_train, X_val, y_train, y_val = train_test_split(features, labels, test_size=.33, random_state=26)
 #print(y_train.shape)
+
+
 
 class AirbnbNightlyPriceRegressionDataset(Dataset):
     def __init__(self, x, y):
@@ -48,17 +52,21 @@ train_dataloader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle
 
 val_data = AirbnbNightlyPriceRegressionDataset(X_val, y_val)
 val_dataloader = DataLoader(dataset=val_data, batch_size=batch_size, shuffle=True)
+print( type(val_dataloader))
 #print(train_dataloader)
 
 # Check it's working
-for batch, (X, y) in enumerate(train_dataloader):
-    print(f"Batch: {batch+1}")
-    print(f"X shape: {X.shape}")
-    print(f"y shape: {y.shape}")
-    break
+# for batch, (X, y) in enumerate(train_dataloader):
+#     print(f"Batch: {batch+1}")
+#     print(f"X shape: {X.shape}")
+#     print(f"y shape: {y.shape}")
+#     break
+
+
+    
 
 input_dim = 11
-hidden_dim = 2
+#hidden_dim = 2
 output_dim = 1
 
 class NeuralNetwork(nn.Module):
@@ -75,8 +83,8 @@ class NeuralNetwork(nn.Module):
         x = torch.nn.functional.sigmoid(self.layer_2(x))
 
         return x
-
-
+    
+#################################  TASK 5 ########################
 
 def get_nn_config(config_file):
     with open(config_file, 'r') as f:
@@ -85,6 +93,7 @@ def get_nn_config(config_file):
 
 config_file = 'nn_config.yaml'
 config = get_nn_config(config_file)
+
 
 # Update hyperparameters from config
 optimiser = config['optimiser']
@@ -95,44 +104,47 @@ depth = config['depth']
 # Define keyword arguments for model config initialisation
 model_configs = {'config': config}
 
+
 model = NeuralNetwork(input_dim, hidden_layer_width, output_dim, depth, model_configs=model_configs)
 shape = [parameter.shape for parameter in model.parameters()]
 #print(shape)
 
-def train(model, data_loader, num_epochs, optimiser, learning_rate):
+def train(model, data_loader, num_epochs, optimizer, learning_rate):
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = nn.BCELoss()
+    writer = SummaryWriter()
     loss_values = []
+
     for epoch in range(num_epochs):
+        train_loss = 0.0
+        train_correct = 0.0
+        train_total = 0.0
+
         for batch_idx, (data, target) in enumerate(data_loader):
             optimizer.zero_grad()
             output = model(data)
-            # Normalize the tensor
-            #output_normalized = (output - output.min()) / (output.max() - output.min())
-            # Normalize the tensor
-            #target_normalized = (target - target.min()) / (target.max() - target.min())
+          
             target = target.float()
-            print(f'target: {target.size()}')
+    
             loss = loss_fn(output, target.unsqueeze(1))
             loss_values.append(loss.item())
             #print(f'loss_values: {loss_values}')
             loss.backward()
             optimizer.step()
 
+            train_loss += loss.item() * data.size(0)
+            _, predicted = torch.max(output.data, 1)
+            train_total += target.size(0)
+            train_correct += (predicted == target).sum().item()
+
+            train_loss /= len(train_dataloader.dataset)
+            train_acc = 100.0 * train_correct / train_total
+
+        writer.add_scalar('Loss/Train', train_loss, epoch)
+        writer.add_scalar('Accuracy/Train', train_acc, epoch)
+    #writer.add_graph('Accuracy/Train', train_loss, epoch)
+
 train(model,train_dataloader, 100, optimiser, learning_rate)
-
-
-def evaluate_model_rmse(model, data_loader):
-    model.eval()
-    total_loss = 0.0
-    num_samples = 0
-    with torch.no_grad():
-        for x, y in data_loader:
-            y_pred = model(x)
-            total_loss += torch.nn.functional.mse_loss(y_pred, y, reduction='sum').item()
-            num_samples += x.size(0)
-    avg_loss = total_loss / num_samples
-    return avg_loss
 
 def evaluate_model_rmse(model, data_loader):
     model.eval()
@@ -159,9 +171,7 @@ def evaluate_model_r2(model, data_loader):
     r2 = r2_score(y_true, y_pred)
     return r2
 
-#train(NeuralNetwork, train_dataloader, 100)
-
-def save_model(model, hyperparameters, train_loader, valid_loader, folder):
+def save_model(model, hyperparameters, train_loader, valid_loader):
     """
     Saves a PyTorch model, its hyperparameters, and its performance metrics to disk.
     
@@ -204,22 +214,18 @@ def save_model(model, hyperparameters, train_loader, valid_loader, folder):
     
     
     # Create directory to save model and metrics
-    timestamp = time.strftime("%Y-%m-%d_%H:%M:%S")
-    directory = os.path.join( 'neural_networks/regression/', timestamp)
-    # try:
-    #     os.makedirs(directory, exist_ok=True)
-    # except OSError as exception:
-    #      if exception.errno != errno.EEXIST:
-    #             raise
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    folder = 'neural_networks/regression'
+    #directory = os.path.join(path, timestamp)
     
     
     # Save PyTorch model
-    model_path = f'{folder}/model.pt'
+    model_path = f'{folder}/{timestamp}_model.pt'
     print(model_path)
     torch.save(model.state_dict(), model_path)
     
     # Save hyperparameters
-    hyperparameters_path = f"{folder}/hyperparameters.json"
+    hyperparameters_path = f"{folder}/{timestamp}_hyperparameters.json"
     with open(hyperparameters_path, "w") as f:
         json.dump(hyperparameters, f)
     
@@ -237,15 +243,105 @@ def save_model(model, hyperparameters, train_loader, valid_loader, folder):
         "training_duration": training_duration,
         "inference_latency": inference_duration
     }
-    metrics_path = f"{folder}/metrics.json"
+    metrics_path = f"{folder}/{timestamp}_metrics.json"
     with open(metrics_path, "w") as f:
         json.dump(metrics, f)
 
-save_model(model, model_configs, train_dataloader, val_dataloader, './neural_networks/regression')
+save_model(model, model_configs, train_dataloader, val_dataloader)
 
 
+############################## Task 7 #########################
 
 
-
-
+def generate_nn_configs(hidden_layers=[64, 128], activations=['relu', 'sigmoid'], 
+                        learning_rates=[0.001, 0.01, 0.1], epochs=[10, 50, 100]):
+    """
+    Generates multiple config dictionaries for a neural network, given a list of possible values for
+    the hyperparameters of interest.
     
+    Args:
+        hidden_layers (list): A list of integers representing the number of neurons in each hidden layer.
+        activations (list): A list of strings representing the activation functions to be used in each layer.
+        learning_rates (list): A list of floats representing the learning rates to be used for training the network.
+        epochs (list): A list of integers representing the number of epochs to be used for training the network.
+        
+    Returns:
+        A list of dictionaries, where each dictionary represents a unique combination of hyperparameters.
+    """
+    
+    # Generate all possible combinations of hyperparameters
+    hyperparam_combinations = list(itertools.product(hidden_layers, activations, learning_rates, epochs))
+    
+    # Create a list of dictionaries, where each dictionary represents a unique combination of hyperparameters
+    configs = []
+    for combo in hyperparam_combinations:
+        config = {
+            'hidden_layers': combo[0],
+            'activation': combo[1],
+            'learning_rate': combo[2],
+            'epochs': combo[3]
+        }
+        configs.append(config)
+        
+    return configs
+
+
+
+def find_best_nn(X_train, y_train, X_val, y_val):
+    # Generate all possible configurations
+    configs = generate_nn_configs()
+    
+    # Keep track of the best model's performance
+    best_score = 0
+    best_model = None
+    best_config = None
+    
+    # Train and evaluate each model configuration
+    for config in configs:
+        
+        # Create the model
+        model = nn.Sequential(
+            nn.Linear(X_train.shape[1], config['hidden_layers']),
+            nn.ReLU(),
+            nn.Linear(config['hidden_layers'], 1),
+            nn.Sigmoid()
+        )
+
+        # Define the loss function and optimizer
+        criterion = nn.BCELoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
+        
+        # Train the model
+        for epoch in range(config['epochs']):
+            optimizer.zero_grad()
+            X_train = torch.tensor(X_train).float()
+            y_train = torch.Tensor(y_train)
+            outputs = model(X_train)
+            criterion = nn.BCELoss()
+            outputs = torch.Tensor(outputs)
+            
+
+            loss = criterion(outputs, y_train.unsqueeze(1))
+            loss.backward()
+            optimizer.step()
+
+        # Evaluate the model
+        with torch.no_grad():
+            X_val = torch.tensor(X_val).float()
+            y_val = torch.Tensor(y_val)
+            predicted = (model(X_val) > 0.5).float()
+            score = (predicted == y_val).sum().item() / y_val.size()[0]
+        
+        # Save the best model and its configuration
+        if score > best_score:
+            best_score = score
+            best_model = model
+            best_config = config
+            
+    # Save the best configuration to a file
+    with open('./neural_networks/best_params/hyperparameters.json', 'w') as f:
+        json.dump(best_config, f)
+    
+    return best_model, best_config
+
+find_best_nn(X_train, y_train, X_val, y_val)
